@@ -1,0 +1,15 @@
+Metadata-Version: 2.1
+Name: ppiformer
+Version: 1.0
+License-File: LICENSE
+Requires-Dist: torch==2.0
+Requires-Dist: cmake
+Requires-Dist: torch_geometric==2.3.1
+Requires-Dist: pytorch_lightning==2.0.8
+Requires-Dist: graphein==1.7.6
+Requires-Dist: equiformer-pytorch@ git+https://github.com/anton-bushuiev/equiformer-pytorch.git@main
+Requires-Dist: wandb
+Requires-Dist: hydra-core
+Requires-Dist: hydra-submitit-launcher
+Requires-Dist: mutils@ git+https://github.com/anton-bushuiev/mutils.git@main
+Requires-Dist: ppiref@ git+https://github.com/anton-bushuiev/PPIRef.git@main

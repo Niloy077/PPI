@@ -1,0 +1,140 @@
+train_dataloader:
+  dataset: skempi2_iclr24_split,0+1
+  _target_: ppiformer.data.loader.get_dataloader
+  _convert_: all
+  _pretransform:
+    pdb_to_pyg:
+      _target_: ppiformer.data.transforms.PDBToPyGPretransform
+      k: null
+      type1_features:
+      - virtual_c_beta_vector
+      - sequence_neighbour_vector_n_to_c
+      - sequence_neighbour_vector_c_to_n
+    ddg_label:
+      _target_: ppiformer.data.transforms.DDGLabelPretransform
+      df: null
+      strict_wt: true
+  _prefilter:
+    ddg_label:
+      _target_: ppiformer.data.transforms.DDGLabelFilter
+  _transform:
+    deep_copy:
+      _target_: ppiformer.data.transforms.DeepCopyTransform
+    ddg_label_sampler:
+      _target_: ppiformer.data.transforms.DDGLabelSamplerTransform
+      n_samples: 1
+  pretransform: ${oc.dict.values:._pretransform}
+  prefilter: ${oc.dict.values:._prefilter}
+  transform: ${oc.dict.values:._transform}
+  fresh: false
+  deterministic: false
+  verbose: true
+  dataset_max_workers: 16
+  shuffle: true
+  batch_size: 1
+  num_workers: 0
+val_dataloader:
+  dataset: skempi2_iclr24_split,2
+  _target_: ppiformer.data.loader.get_dataloader
+  _convert_: all
+  _pretransform:
+    pdb_to_pyg:
+      _target_: ppiformer.data.transforms.PDBToPyGPretransform
+      k: null
+      type1_features:
+      - virtual_c_beta_vector
+      - sequence_neighbour_vector_n_to_c
+      - sequence_neighbour_vector_c_to_n
+    ddg_label:
+      _target_: ppiformer.data.transforms.DDGLabelPretransform
+      df: null
+      strict_wt: true
+  _prefilter:
+    ddg_label:
+      _target_: ppiformer.data.transforms.DDGLabelFilter
+  _transform: {}
+  pretransform: ${oc.dict.values:._pretransform}
+  prefilter: ${oc.dict.values:._prefilter}
+  transform: ${oc.dict.values:._transform}
+  fresh: false
+  deterministic: false
+  verbose: true
+  dataset_max_workers: 16
+  shuffle: false
+  batch_size: 1
+  num_workers: 0
+team_name: ppiformer
+project_name: DDG_REGRESSION
+run_name: fine_tuning_iclr24
+tags: null
+job_key: ''
+resume_job_key: null
+seed: 3721
+cv: true
+resume: false
+test: false
+model:
+  encoder:
+    _target_: equiformer_pytorch.Equiformer
+    dim:
+    - 128
+    - 64
+    dim_in: ${..input_dim}
+    num_degrees: 2
+    input_degrees: 2
+    heads: 2
+    dim_head:
+    - 32
+    - 16
+    depth: 8
+    valid_radius: 8
+    num_neighbors: 10
+    num_edge_tokens: 2
+    edge_dim: 16
+    gate_attn_head_outputs: false
+  _target_: ppiformer.tasks.node.DDGPPIformer
+  input_dim:
+  - 20
+  - 1
+  hidden_dim: 32
+  hidden_degree: 2
+  embedding_dim: 128
+  classifier:
+    _target_: torch_geometric.nn.MLP
+    in_channels: ${..embedding_dim}
+    hidden_channels: ${..embedding_dim}
+    out_channels: 20
+    num_layers: 1
+  optimizer:
+    _target_: torch.optim.Adam
+    _partial_: true
+    lr: 0.0003
+    weight_decay: 0.0
+  pre_encoder_transform_kwargs:
+    divide_coords_by: 4.0
+    intra_inter_edge_features: true
+    coord_fill_value: 1.0e-06
+  verbose: false
+  checkpoint_path: ../weights/masked_modeling.ckpt
+  map_location: null
+  kind: masked_marginals
+  test_csv_path: null
+  correction: false
+trainer:
+  _target_: pytorch_lightning.Trainer
+  strategy:
+    _target_: pytorch_lightning.strategies.DDPStrategy
+    find_unused_parameters: true
+  accelerator: cpu
+  devices: 8
+  max_epochs: -1
+  log_every_n_steps: 8
+  val_check_interval: 1.0
+  check_val_every_n_epoch: 5
+  num_sanity_val_steps: 0
+  accumulate_grad_batches: 32
+  detect_anomaly: false
+  gradient_clip_val: null
+  gradient_clip_algorithm: null
+  num_nodes: 1
+  use_distributed_sampler: true
